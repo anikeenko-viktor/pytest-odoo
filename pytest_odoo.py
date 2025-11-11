@@ -98,9 +98,6 @@ def pytest_cmdline_main(config):
         # Restore the default one.
         signal.signal(signal.SIGINT, signal.default_int_handler)
 
-        if odoo.release.version_info >= (18,):
-            odoo.modules.module.current_test = True
-
         if odoo.release.version_info < (15,):
             # Refactor in Odoo 15, not needed anymore
             with odoo.api.Environment.manage():
@@ -186,6 +183,14 @@ def enable_odoo_test_flag():
     odoo.tools.config['test_enable'] = True
     yield
     odoo.tools.config['test_enable'] = False
+
+
+@pytest.fixture(scope='function', autouse=True)
+def current_test(request):
+    if odoo.release.version_info >= (18,):
+        odoo.modules.module.current_test = request.instance
+    yield
+
 
 def monkey_patch_resolve_pkg_root_and_module_name():
     original_resolve_pkg_root_and_module_name = _pytest.pathlib.resolve_pkg_root_and_module_name
